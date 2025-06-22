@@ -1,0 +1,151 @@
+```jsx
+import { useState, useRef } from 'react';
+
+export default function App() {
+  const [transactions, setTransactions] = useState([]);
+  const [walletAddresses, setWalletAddresses] = useState([]);
+  const [formData, setFormData] = useState({
+    exchange: '',
+    date: '',
+    time: '',
+    amount: '',
+    walletAddress: '',
+  });
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedExchange, setSelectedExchange] = useState(null);
+  const [receiptPreview, setReceiptPreview] = useState(false);
+  const receiptRef = useRef(null);
+
+  // Exchange options with icons
+  const exchanges = [
+    { name: 'Binance', icon: <BinanceIcon /> },
+    { name: 'Coinbase', icon: <CoinbaseIcon /> },
+    { name: 'Kraken', icon: <KrakenIcon /> },
+    { name: 'KuCoin', icon: <KucoinIcon /> },
+    { name: 'Bitstamp', icon: <BitstampIcon /> },
+  ];
+
+  // Generate wallet address
+  const generateWalletAddress = () => {
+    const chars = '0123456789abcdef';
+    let address = '0x';
+    for (let i = 0; i < 40; i++) {
+      address += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return address;
+  };
+
+  // Add new wallet address
+  const addNewWalletAddress = () => {
+    const newAddress = generateWalletAddress();
+    setWalletAddresses([...walletAddresses, newAddress]);
+    setFormData({ ...formData, walletAddress: newAddress });
+  };
+
+  // Handle form input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  // Handle exchange selection
+  const handleExchangeSelect = (exchange) => {
+    setSelectedExchange(exchange);
+    setFormData({ ...formData, exchange: exchange.name });
+  };
+
+  // Submit transaction form
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (editingIndex !== null) {
+      const updated = [...transactions];
+      updated[editingIndex] = { ...formData, exchange: selectedExchange?.name || formData.exchange };
+      setTransactions(updated);
+      setEditingIndex(null);
+    } else {
+      setTransactions([...transactions, { ...formData, exchange: selectedExchange?.name || formData.exchange }]);
+    }
+    setFormData({
+      exchange: '',
+      date: '',
+      time: '',
+      amount: '',
+      walletAddress: '',
+    });
+    setSelectedExchange(null);
+    setIsModalOpen(false);
+    setReceiptPreview(false);
+  };
+
+  // Edit transaction
+  const handleEdit = (index) => {
+    const tx = transactions[index];
+    setFormData(tx);
+    setSelectedExchange(exchanges.find(e => e.name === tx.exchange) || null);
+    setEditingIndex(index);
+    setIsModalOpen(true);
+  };
+
+  // Delete transaction
+  const handleDelete = (index) => {
+    const updated = transactions.filter((_, i) => i !== index);
+    setTransactions(updated);
+  };
+
+  // Generate receipt preview
+  const handleGenerateReceipt = (tx) => {
+    setReceiptPreview(tx);
+  };
+
+  // Mock data initialization
+  useEffect(() => {
+    setTransactions([
+      {
+        exchange: 'Binance',
+        date: '2024-03-01',
+        time: '14:30',
+        amount: '0.5 BTC',
+        walletAddress: '0x3fC96A3F78cEe2D25ccD3c11bf31BdF6EAa4b5d3',
+      },
+      {
+        exchange: 'Coinbase',
+        date: '2024-03-02',
+        time: '09:15',
+        amount: '2 ETH',
+        walletAddress: '0x5aA022fC1234eB9D89Dc85Ed71FA71596FaEb911',
+      },
+    ]);
+    setWalletAddresses([
+      '0x3fC96A3F78cEe2D25ccD3c11bf31BdF6EAa4b5d3',
+      '0x5aA022fC1234eB9D89Dc85Ed71FA71596FaEb911',
+    ]);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
+        <div className="container mx-auto px-4 py-6 flex flex-col sm:flex-row justify-between items-center">
+          <div className="flex items-center mb-4 sm:mb-0">
+            <svg className="w-8 h-8 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <h1 className="text-2xl md:text-3xl font-bold">Crypto Transaction Studio</h1>
+          </div>
+          <button
+            onClick={() => {
+              setFormData({
+                exchange: '',
+                date: '',
+                time: '',
+                amount: '',
+                walletAddress: '',
+              });
+              setSelectedExchange(null);
+              setEditingIndex(null);
+              setIsModalOpen(true);
+            }}
+            className="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-md font-medium transition flex ite
